@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Support BloodLink TN — Donate</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    body { background: #F4F3F0; }
+    .donate-page { max-width: 1100px; margin: 0 auto; padding: 100px 24px 80px; }
+
+    /* Header */
+    .donate-hero { text-align: center; margin-bottom: 56px; }
+    .donate-hero .section-tag { margin-bottom: 14px; }
+    .donate-hero h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 14px; }
+    .donate-hero p  { font-size: 1rem; color: var(--mid); max-width: 540px; margin: 0 auto 28px; line-height: 1.75; }
+
+    /* Raised counter */
+    .raised-bar {
+      display: inline-flex; align-items: center; gap: 20px;
+      background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-xl);
+      padding: 16px 28px; margin: 0 auto 48px; box-shadow: var(--shadow-sm);
+    }
+    .raised-num { font-family: var(--font-mono); font-size: 1.6rem; font-weight: 700; color: #15803D; }
+    .raised-txt { font-size: 0.85rem; color: var(--muted); }
+    .raised-divider { width: 1px; height: 36px; background: var(--border); }
+
+    /* Main grid */
+    .donate-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; align-items: start; }
+
+    /* Donate card */
+    .donate-card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 32px; box-shadow: var(--shadow-sm);
+    }
+    .donate-card h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.01em; }
+
+    /* Amount presets */
+    .amount-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+    .preset-btn {
+      padding: 10px 6px; border: 1.5px solid var(--border); border-radius: var(--radius-md);
+      background: var(--bg); font-family: var(--font-mono); font-size: 0.9rem; font-weight: 700;
+      color: var(--mid); cursor: pointer; transition: all .15s; text-align: center;
+    }
+    .preset-btn:hover { border-color: #22C55E; color: #15803D; background: #F0FDF4; }
+    .preset-btn.selected { border-color: #22C55E; background: #22C55E; color: white; }
+
+    .custom-amount-wrap {
+      display: flex; align-items: center;
+      border: 1.5px solid var(--border); border-radius: var(--radius-md); overflow: hidden;
+      margin-bottom: 16px; transition: border-color .2s;
+    }
+    .custom-amount-wrap:focus-within { border-color: #22C55E; }
+    .amount-prefix {
+      padding: 0 12px; font-family: var(--font-mono); font-size: 1rem; font-weight: 700;
+      color: var(--mid); border-right: 1px solid var(--border);
+      height: 44px; display: flex; align-items: center; background: var(--bg);
+    }
+    .amount-input {
+      flex: 1; border: none; padding: 10px 14px; font-family: var(--font-mono);
+      font-size: 1rem; font-weight: 700; color: var(--dark); outline: none; background: white;
+    }
+
+    /* Donor fields */
+    .donor-fields { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+    .donor-field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--dark); margin-bottom: 5px; }
+    .donor-field input {
+      width: 100%; padding: 9px 14px; font-family: var(--font-body); font-size: 0.88rem;
+      border: 1.5px solid var(--border); border-radius: var(--radius-md);
+      outline: none; color: var(--dark); transition: border-color .2s;
+    }
+    .donor-field input:focus { border-color: #22C55E; }
+    .donor-fields-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .message-field { margin-bottom: 20px; }
+    .message-field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--dark); margin-bottom: 5px; }
+    .message-field textarea {
+      width: 100%; padding: 9px 14px; font-family: var(--font-body); font-size: 0.85rem;
+      border: 1.5px solid var(--border); border-radius: var(--radius-md);
+      outline: none; resize: none; color: var(--dark);
+    }
+
+    .donate-submit {
+      width: 100%; padding: 14px; background: #22C55E; color: white;
+      font-family: var(--font-body); font-size: 1rem; font-weight: 700;
+      border: none; border-radius: var(--radius-lg); cursor: pointer; transition: background .2s;
+    }
+    .donate-submit:hover { background: #16A34A; }
+    .donate-submit:disabled { background: #D1D5DB; cursor: not-allowed; }
+
+    .secure-note {
+      display: flex; align-items: center; gap: 6px; justify-content: center;
+      font-size: 0.75rem; color: var(--muted); margin-top: 12px;
+    }
+    .sim-note {
+      font-size: 0.78rem; color: #A16207; background: #FEF9C3; border: 1px solid #FDE68A;
+      padding: 8px 12px; border-radius: var(--radius-md); margin-bottom: 14px; text-align: center;
+    }
+
+    /* Why card */
+    .why-card { background: var(--dark); color: white; border-radius: var(--radius-xl); padding: 32px; }
+    .why-card h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; }
+    .why-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+    .why-icon {
+      width: 36px; height: 36px; border-radius: var(--radius-sm);
+      background: rgba(255,255,255,.08); display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; font-size: 1rem;
+    }
+    .why-text h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 3px; }
+    .why-text p  { font-size: 0.8rem; color: #888; line-height: 1.6; }
+
+    .recent-donors { margin-top: 28px; }
+    .recent-donors h3 { font-size: 0.85rem; font-weight: 600; color: #666; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .05em; }
+    .donor-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #1e1e1e; }
+    .donor-row:last-child { border-bottom: none; }
+    .donor-avatar { width: 30px; height: 30px; border-radius: 50%; background: #1e1e1e; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; color: #666; }
+    .donor-name  { flex: 1; font-size: 0.84rem; color: #ccc; }
+    .donor-amount { font-family: var(--font-mono); font-size: 0.84rem; font-weight: 700; color: #4ADE80; }
+
+    /* Success screen */
+    .success-screen {
+      display: none; text-align: center; padding: 40px 20px;
+    }
+    .success-icon { width: 72px; height: 72px; background: #22C55E; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2rem; }
+    .success-screen h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 10px; }
+    .success-screen p  { color: var(--mid); line-height: 1.7; }
+
+    #donateAlert { margin-bottom: 14px; display: none; }
+
+    @media (max-width: 800px) {
+      .donate-grid      { grid-template-columns: 1fr; }
+      .amount-presets   { grid-template-columns: repeat(4, 1fr); }
+      .donor-fields-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) { .amount-presets { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-logo">
+        <span class="logo-drop">&#9632;</span>
+        <span class="logo-text">BloodLink<span class="logo-tn">TN</span></span>
+      </a>
+      <div style="margin-left:auto;display:flex;gap:10px">
+        <a href="../pages/register.html?tab=login" class="btn-ghost">Log in</a>
+        <a href="../index.html" class="btn-primary">Back to home</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="donate-page">
+    <div class="donate-hero">
+      <span class="section-tag">Support the mission</span>
+      <h1>Help keep BloodLink TN free</h1>
+      <p>We're a non-profit platform. Every rupee goes toward server costs, SMS alerts, and reaching more blood banks across Tamil Nadu.</p>
+      <div class="raised-bar">
+        <div>
+          <div class="raised-num" id="heroRaised">₹0</div>
+          <div class="raised-txt">raised so far</div>
+        </div>
+        <div class="raised-divider"></div>
+        <div>
+          <div class="raised-num" id="heroDonors">0</div>
+          <div class="raised-txt">supporters</div>
+        </div>
+        <div class="raised-divider"></div>
+        <div>
+          <div class="raised-num">Free</div>
+          <div class="raised-txt">for patients always</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="donate-grid">
+      <!-- Donate form -->
+      <div class="donate-card">
+        <div id="donateForm">
+          <h2>Make a donation</h2>
+
+          <div class="sim-note" id="simNote" style="display:none">
+            Demo mode — no real money charged. Set Razorpay keys in .env to go live.
+          </div>
+
+          <div class="amount-presets">
+            <button class="preset-btn" data-amount="50" onclick="selectPreset(this)">₹50</button>
+            <button class="preset-btn selected" data-amount="100" onclick="selectPreset(this)">₹100</button>
+            <button class="preset-btn" data-amount="500" onclick="selectPreset(this)">₹500</button>
+            <button class="preset-btn" data-amount="1000" onclick="selectPreset(this)">₹1000</button>
+          </div>
+
+          <div class="custom-amount-wrap">
+            <div class="amount-prefix">₹</div>
+            <input type="number" class="amount-input" id="customAmount" placeholder="Or enter custom amount" min="1" oninput="onCustomAmount(this)"/>
+          </div>
+
+          <div class="donor-fields">
+            <div class="donor-fields-row">
+              <div class="donor-field">
+                <label>Your name *</label>
+                <input type="text" id="donorName" placeholder="Arun Kumar" autocomplete="name"/>
+              </div>
+              <div class="donor-field">
+                <label>Email *</label>
+                <input type="email" id="donorEmail" placeholder="you@example.com" autocomplete="email"/>
+              </div>
+            </div>
+            <div class="donor-field">
+              <label>Phone <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+              <input type="tel" id="donorPhone" placeholder="+91 98765 43210"/>
+            </div>
+          </div>
+
+          <div class="message-field">
+            <label>Message <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+            <textarea id="donorMessage" rows="2" placeholder="Keep up the great work! — Arun, Salem"></textarea>
+          </div>
+
+          <div class="form-alert" id="donateAlert"></div>
+
+          <button class="donate-submit" id="donateBtn" onclick="startPayment()">
+            Donate ₹<span id="donateAmtDisplay">100</span>
+          </button>
+          <div class="secure-note">
+            <svg viewBox="0 0 16 16" fill="none" width="12" height="12"><rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.4"/></svg>
+            Secured by Razorpay &nbsp;·&nbsp; 100% goes to platform costs
+          </div>
+        </div>
+
+        <!-- Success screen -->
+        <div class="success-screen" id="successScreen">
+          <div class="success-icon">♥</div>
+          <h2>Thank you!</h2>
+          <p>Your donation of <strong id="successAmt"></strong> has been received.<br/>You're helping save lives across Tamil Nadu.</p>
+          <a href="../index.html" class="btn-primary" style="display:inline-flex;margin-top:24px">Back to home</a>
+        </div>
+      </div>
+
+      <!-- Why card -->
+      <div>
+        <div class="why-card">
+          <h2>Where your money goes</h2>
+          <div class="why-item">
+            <div class="why-icon">📡</div>
+            <div class="why-text">
+              <h4>Server & infrastructure</h4>
+              <p>Keeps the BloodLink platform live 24/7 for all 38 TN districts.</p>
+            </div>
+          </div>
+          <div class="why-item">
+            <div class="why-icon">📱</div>
+            <div class="why-text">
+              <h4>SMS alerts</h4>
+              <p>Each SMS costs ₹0.18. Your ₹100 sends 555 life-saving alerts to waiting patients.</p>
+            </div>
+          </div>
+          <div class="why-item">
+            <div class="why-icon">🌐</div>
+            <div class="why-text">
+              <h4>Expanding coverage</h4>
+              <p>Onboarding more blood banks from rural TN districts — Salem to Ramanathapuram.</p>
+            </div>
+          </div>
+          <div class="why-item">
+            <div class="why-icon">🎓</div>
+            <div class="why-text">
+              <h4>Student-built</h4>
+              <p>Built by CS Engineering students at Tiruchirappalli as a public service project.</p>
+            </div>
+          </div>
+          <div class="recent-donors">
+            <h3>Recent supporters</h3>
+            <div id="recentDonors">
+              <div style="font-size:.8rem;color:#666">Loading...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Razorpay SDK — loads from Razorpay CDN -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/main.js"></script>
+  <script>
+    const BASE_URL = 'http://localhost:8000/api';
+    let selectedAmount = 100;
+    let pendingPaymentId = null;
+
+    /* ── Amount selection ── */
+    function selectPreset(btn) {
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedAmount = parseInt(btn.getAttribute('data-amount'));
+      document.getElementById('customAmount').value = '';
+      document.getElementById('donateAmtDisplay').textContent = selectedAmount;
+    }
+    function onCustomAmount(inp) {
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+      selectedAmount = parseInt(inp.value) || 0;
+      document.getElementById('donateAmtDisplay').textContent = selectedAmount || '—';
+    }
+
+    /* ── Validation ── */
+    function validate() {
+      const name  = document.getElementById('donorName').value.trim();
+      const email = document.getElementById('donorEmail').value.trim();
+      const alertEl = document.getElementById('donateAlert');
+      if (!name)  { showAlert('error', 'Please enter your name'); return false; }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showAlert('error', 'Please enter a valid email'); return false; }
+      if (!selectedAmount || selectedAmount < 1) { showAlert('error', 'Please enter an amount (minimum ₹1)'); return false; }
+      alertEl.style.display = 'none';
+      return true;
+    }
+
+    function showAlert(type, msg) {
+      const el = document.getElementById('donateAlert');
+      el.className = 'form-alert ' + type; el.textContent = msg; el.style.display = 'block';
+    }
+
+    /* ── Start payment ── */
+    async function startPayment() {
+      if (!validate()) return;
+      const btn = document.getElementById('donateBtn');
+      btn.disabled = true; btn.textContent = 'Processing...';
+
+      try {
+        const res = await fetch(BASE_URL + '/payments/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount:  selectedAmount,
+            name:    document.getElementById('donorName').value.trim(),
+            email:   document.getElementById('donorEmail').value.trim(),
+            phone:   document.getElementById('donorPhone').value.trim(),
+            message: document.getElementById('donorMessage').value.trim(),
+          }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.msg);
+
+        pendingPaymentId = data.paymentId;
+
+        if (data.simMode) {
+          // Simulation mode — skip Razorpay popup, verify directly
+          document.getElementById('simNote').style.display = 'block';
+          await verifyPayment(data.orderId, 'SIM_PAY_' + Date.now(), 'simulated', pendingPaymentId);
+        } else {
+          // Real Razorpay popup
+          openRazorpay(data);
+        }
+      } catch (err) {
+        showAlert('error', err.message);
+        btn.disabled = false; btn.textContent = 'Donate ₹' + selectedAmount;
+      }
+    }
+
+    /* ── Razorpay popup ── */
+    function openRazorpay(data) {
+      const options = {
+        key:      data.key,
+        amount:   data.amount,
+        currency: data.currency,
+        name:     'BloodLink TN',
+        description: 'Support donation — keep BloodLink free',
+        order_id: data.orderId,
+        prefill:  {
+          name:  document.getElementById('donorName').value.trim(),
+          email: document.getElementById('donorEmail').value.trim(),
+          contact: document.getElementById('donorPhone').value.trim(),
+        },
+        theme: { color: '#22C55E' },
+        handler: async function(response) {
+          await verifyPayment(
+            response.razorpay_order_id,
+            response.razorpay_payment_id,
+            response.razorpay_signature,
+            pendingPaymentId
+          );
+        },
+        modal: {
+          ondismiss: function() {
+            const btn = document.getElementById('donateBtn');
+            btn.disabled=false; btn.textContent='Donate ₹' + selectedAmount;
+          }
+        },
+      };
+      const rzp = new Razorpay(options);
+      rzp.on('payment.failed', function() { showAlert('error', 'Payment failed. Please try again.'); });
+      rzp.open();
+    }
+
+    /* ── Verify payment with backend ── */
+    async function verifyPayment(orderId, paymentId, signature, dbPaymentId) {
+      try {
+        const res = await fetch(BASE_URL + '/payments/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpayOrderId:   orderId,
+            razorpayPaymentId: paymentId,
+            razorpaySignature: signature,
+            paymentId:         dbPaymentId,
+          }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.msg);
+
+        // Show success screen
+        document.getElementById('donateForm').style.display = 'none';
+        document.getElementById('successScreen').style.display = 'block';
+        document.getElementById('successAmt').textContent = '₹' + selectedAmount;
+        loadStats(); loadRecentDonors();
+      } catch (err) {
+        showAlert('error', 'Verification failed: ' + err.message);
+        const btn = document.getElementById('donateBtn');
+        btn.disabled=false; btn.textContent='Donate ₹' + selectedAmount;
+      }
+    }
+
+    /* ── Load stats ── */
+    async function loadStats() {
+      try {
+        const res  = await fetch(BASE_URL + '/payments/total');
+        const data = await res.json();
+        document.getElementById('heroRaised').textContent  = '₹' + (data.total||0).toLocaleString('en-IN');
+        document.getElementById('heroDonors').textContent  = data.count || 0;
+      } catch(e) { console.log('Stats load failed:', e.message); }
+    }
+
+    /* ── Recent donors ── */
+    async function loadRecentDonors() {
+      try {
+        const res  = await fetch(BASE_URL + '/payments/recent');
+        const data = await res.json();
+        const wrap = document.getElementById('recentDonors');
+        if (!data.payments || !data.payments.length) {
+          wrap.innerHTML = '<div style="font-size:.8rem;color:#666">Be the first supporter!</div>';
+          return;
+        }
+        wrap.innerHTML = data.payments.map(p => `
+          <div class="donor-row">
+            <div class="donor-avatar">${(p.donor.name||'?')[0].toUpperCase()}</div>
+            <div class="donor-name">${p.donor.name}${p.message ? ' — <em style="color:#666;font-style:italic">' + p.message.slice(0,40) + '</em>' : ''}</div>
+            <div class="donor-amount">₹${p.amount}</div>
+          </div>`).join('');
+      } catch(e) { console.log('Recent donors load failed'); }
+    }
+
+    // Init
+    loadStats();
+    loadRecentDonors();
+  </script>
+</body>
+</html>

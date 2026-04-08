@@ -1,0 +1,596 @@
+/* ═══════════════════════════════════════════
+   BLOODLINK TN — BANK DASHBOARD STYLES
+   Extends dashboard.css with bank-specific
+   components:
+   1. Bank body & avatar
+   2. Status toggle
+   3. Stat cards row
+   4. Inventory overview grid
+   5. Stock update grid & controls
+   6. Donation log card
+   7. Request filter tabs
+   8. Bank request cards
+   9. History list
+   10. Bank profile card
+   11. Misc utilities
+═══════════════════════════════════════════ */
+
+/* ─── 1. BANK BODY & AVATAR ────────────── */
+.bank-body { background: #F0F0ED; }
+
+.bank-avatar {
+  background: #185FA5 !important; /* Blue for blood bank, vs red for patient */
+}
+
+/* ─── 2. STATUS TOGGLE ─────────────────── */
+.bank-status-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 12px 12px 0;
+  padding: 10px 14px;
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.2);
+  border-radius: var(--radius-md);
+  transition: background .3s, border-color .3s;
+}
+.bank-status-toggle.closed {
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(239,68,68,0.2);
+}
+
+.status-info { display: flex; align-items: center; gap: 8px; }
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #22C55E;
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+.status-dot.closed { background: #EF4444; animation: none; }
+
+.status-text { font-size: 0.75rem; color: #aaa; }
+
+.status-btn {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(34,197,94,0.3);
+  color: #22C55E;
+  background: none;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+  white-space: nowrap;
+}
+.status-btn:hover { background: rgba(34,197,94,0.15); }
+.status-btn.closed { color: #EF4444; border-color: rgba(239,68,68,0.3); }
+.status-btn.closed:hover { background: rgba(239,68,68,0.12); }
+
+/* ─── 3. STAT CARDS ROW ────────────────── */
+.stat-cards-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: box-shadow .2s;
+}
+.stat-card:hover { box-shadow: var(--shadow-md); }
+
+.stat-card-icon {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.total-icon     { background: #EEF6FF; color: #185FA5; }
+.pending-icon   { background: #FEF9C3; color: #A16207; }
+.critical-icon  { background: var(--red-light); color: var(--red); }
+.fulfilled-icon { background: #DCFCE7; color: #15803D; }
+
+.stat-card-body { display: flex; flex-direction: column; gap: 2px; }
+.stat-card-num {
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1;
+}
+.stat-card-label { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
+
+/* ─── 4. INVENTORY OVERVIEW GRID ────────── */
+.section-subheader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-subheader h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--dark);
+}
+.btn-link {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--red);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  padding: 4px 0;
+  transition: opacity .2s;
+}
+.btn-link:hover { opacity: 0.75; }
+
+.inventory-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 10px;
+}
+
+.inv-tile {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 10px;
+  text-align: center;
+  transition: transform .2s, box-shadow .2s;
+}
+.inv-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+
+.inv-tile.lvl-high     { border-top: 3px solid #22C55E; }
+.inv-tile.lvl-medium   { border-top: 3px solid #F59E0B; }
+.inv-tile.lvl-low      { border-top: 3px solid var(--red); }
+.inv-tile.lvl-empty    { border-top: 3px solid #D1D5DB; opacity: 0.55; }
+
+.inv-group {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 8px;
+}
+.inv-units {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.lvl-high   .inv-units { color: #15803D; }
+.lvl-medium .inv-units { color: #A16207; }
+.lvl-low    .inv-units { color: var(--red); }
+.lvl-empty  .inv-units { color: #9CA3AF; }
+.inv-label {
+  font-size: 0.65rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+/* ─── 5. STOCK UPDATE GRID ─────────────── */
+.stock-update-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.stock-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+
+.stock-row {
+  display: contents;
+}
+
+/* Each row spans all 4 columns as a flex group */
+.stock-item {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.stock-item:nth-child(4n) { border-right: none; }
+.stock-item:nth-last-child(-n+4) { border-bottom: none; }
+
+.stock-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.stock-group-tag {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--white);
+  background: var(--red);
+  width: 48px; height: 36px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stock-level-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-high   { background: #22C55E; }
+.dot-medium { background: #F59E0B; }
+.dot-low    { background: var(--red); }
+.dot-empty  { background: #D1D5DB; }
+
+.stock-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stock-dec, .stock-inc {
+  width: 30px; height: 30px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--dark);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color .2s, background .2s;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.stock-dec:hover { border-color: var(--red); color: var(--red); }
+.stock-inc:hover { border-color: #22C55E; color: #22C55E; }
+
+.stock-input {
+  width: 56px;
+  text-align: center;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 5px 6px;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--dark);
+  background: var(--white);
+  outline: none;
+  transition: border-color .2s;
+}
+.stock-input:focus { border-color: var(--red); }
+.stock-input.changed { border-color: #F59E0B; background: #FFFBF0; }
+
+.stock-sublabel {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.stock-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.stock-footer-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.stock-footer-actions { display: flex; gap: 10px; align-items: center; }
+
+/* ─── 6. DONATION LOG ──────────────────── */
+.donation-log-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+}
+.donation-form-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ─── 7. REQUEST FILTER TABS ───────────── */
+.req-filter-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  background: var(--bg);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  width: fit-content;
+}
+.req-tab {
+  padding: 7px 18px;
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--muted);
+  border-radius: var(--radius-sm);
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+}
+.req-tab.active   { background: var(--white); color: var(--dark); box-shadow: var(--shadow-sm); }
+.req-tab:hover:not(.active) { color: var(--dark); }
+
+/* ─── 8. BANK REQUEST CARDS ────────────── */
+.bank-requests-list { display: flex; flex-direction: column; gap: 14px; }
+
+.bank-req-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  transition: box-shadow .2s;
+  animation: cardIn .3s ease both;
+}
+.bank-req-card:hover { box-shadow: var(--shadow-sm); }
+.bank-req-card.req-urgent { border-left: 4px solid var(--red); }
+.bank-req-card.req-critical-card { border-left: 4px solid #DC2626; }
+
+.req-avatar {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-md);
+  background: #EEF6FF;
+  color: #185FA5;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.req-body { flex: 1; min-width: 0; }
+.req-top  { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.req-name { font-size: 0.95rem; font-weight: 600; color: var(--dark); }
+.req-time { font-size: 0.75rem; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+.req-detail { font-size: 0.82rem; color: var(--mid); margin-bottom: 12px; line-height: 1.6; }
+.req-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.req-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--mid);
+  border: 1px solid var(--border);
+}
+.req-tag.blood { background: var(--red-light); color: var(--red-dark); border-color: var(--red-mid); }
+.req-tag.urgent-tag { background: #FEF9C3; color: #A16207; border-color: #FDE68A; }
+.req-tag.critical-tag { background: var(--red-light); color: var(--red); border-color: var(--red-mid); }
+
+.req-actions { display: flex; gap: 8px; }
+.req-approve-btn {
+  flex: 1;
+  padding: 8px 16px;
+  background: #22C55E;
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s;
+}
+.req-approve-btn:hover { background: #16A34A; }
+.req-decline-btn {
+  padding: 8px 16px;
+  background: none;
+  color: var(--mid);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+}
+.req-decline-btn:hover { border-color: var(--red); color: var(--red); }
+.req-view-btn {
+  padding: 8px 14px;
+  background: var(--bg);
+  color: var(--mid);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+.req-view-btn:hover { border-color: #aaa; }
+
+.req-status-approved { color: #15803D; font-size: 0.82rem; font-weight: 600; }
+.req-status-rejected { color: var(--red); font-size: 0.82rem; font-weight: 600; }
+
+/* ─── 9. HISTORY LIST ──────────────────── */
+.history-list { display: flex; flex-direction: column; gap: 2px; }
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: background .15s;
+}
+.history-item:hover { background: var(--bg); }
+.history-type-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-in  { background: #22C55E; }
+.dot-out { background: var(--red); }
+
+.history-desc { flex: 1; font-size: 0.88rem; color: var(--dark); }
+.history-sub  { font-size: 0.75rem; color: var(--muted); margin-top: 1px; }
+.history-group {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--dark);
+  border: 1px solid var(--border);
+}
+.history-change {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 700;
+  min-width: 48px;
+  text-align: right;
+}
+.change-pos { color: #15803D; }
+.change-neg { color: var(--red); }
+.history-time { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+
+/* ─── 10. BANK PROFILE ─────────────────── */
+.bank-profile-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  max-width: 560px;
+}
+.bank-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.bank-profile-avatar {
+  width: 64px; height: 64px;
+  background: #185FA5;
+  color: var(--white);
+  font-family: var(--font-mono);
+  font-size: 1.3rem;
+  font-weight: 700;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.bank-profile-name { font-size: 1.1rem; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
+.bank-profile-badge { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); }
+.verified-badge {
+  background: #DCFCE7;
+  color: #15803D;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+/* ─── 11. MISC ─────────────────────────── */
+.topbar-time {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+  background: var(--bg);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+
+/* Recent requests preview (overview page) */
+.recent-requests-list { display: flex; flex-direction: column; gap: 10px; }
+.recent-req-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.recent-req-group {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--red);
+  background: var(--red-light);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.recent-req-info { flex: 1; }
+.recent-req-name { font-size: 0.88rem; font-weight: 600; color: var(--dark); }
+.recent-req-sub  { font-size: 0.75rem; color: var(--muted); margin-top: 1px; }
+.recent-req-status {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+/* Responsive overrides for bank dashboard */
+@media (max-width: 1100px) {
+  .stat-cards-row { grid-template-columns: repeat(2, 1fr); }
+  .inventory-overview-grid { grid-template-columns: repeat(4, 1fr); }
+  .stock-grid { grid-template-columns: repeat(2, 1fr); }
+  .stock-item:nth-child(4n) { border-right: 1px solid var(--border); }
+  .stock-item:nth-child(2n) { border-right: none; }
+}
+
+@media (max-width: 700px) {
+  .stat-cards-row { grid-template-columns: 1fr 1fr; }
+  .inventory-overview-grid { grid-template-columns: repeat(4, 1fr); }
+  .stock-grid { grid-template-columns: 1fr 1fr; }
+  .donation-form-row { flex-direction: column; }
+  .donation-form-row .btn-primary { width: 100%; }
+  .bank-profile-header { flex-direction: column; text-align: center; }
+  .bank-req-card { flex-direction: column; }
+  .req-actions { width: 100%; }
+  .req-approve-btn { flex: 1; }
+}
+
+@media (max-width: 480px) {
+  .inventory-overview-grid { grid-template-columns: repeat(4, 1fr); }
+  .inv-tile { padding: 10px 6px; }
+  .inv-units { font-size: 1.1rem; }
+}

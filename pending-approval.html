@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Awaiting Approval — BloodLink TN</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{
+      min-height:100vh; background:#0A0A0A;
+      display:flex; align-items:center; justify-content:center;
+      padding:24px; font-family:'Sora',sans-serif;
+    }
+
+    .wrap { width:100%; max-width:540px; }
+
+    /* Logo */
+    .logo {
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      font-family:'Space Mono',monospace; font-size:1rem; font-weight:700;
+      color:#fff; margin-bottom:36px;
+    }
+    .logo-drop,.logo-tn { color:#E8221A; }
+
+    /* Spinning clock ring */
+    .clock-ring {
+      width:80px; height:80px; border-radius:50%;
+      border:3px solid #1e1e1e; border-top-color:#F59E0B;
+      animation:spin 1.4s linear infinite;
+      margin:0 auto 22px;
+      display:flex; align-items:center; justify-content:center;
+      position:relative;
+    }
+    .clock-ring::after {
+      content:'⏱'; font-size:1.8rem; position:absolute;
+      animation:spin 1.4s linear infinite reverse;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    h1  { font-size:1.5rem; font-weight:700; color:#fff; margin-bottom:8px; letter-spacing:-0.02em; text-align:center; }
+    .sub{ font-size:.88rem; color:#666; line-height:1.75; margin-bottom:28px; text-align:center; max-width:420px; margin-left:auto; margin-right:auto; }
+
+    /* Status badge */
+    .status-badge {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:7px 16px; border-radius:999px;
+      font-size:.75rem; font-weight:700; margin-bottom:24px;
+      border:1px solid; width:fit-content; margin-left:auto; margin-right:auto;
+    }
+    .status-pending  { background:rgba(245,158,11,.1); color:#F59E0B; border-color:rgba(245,158,11,.25); }
+    .status-approved { background:rgba(34,197,94,.1);  color:#22C55E; border-color:rgba(34,197,94,.25); }
+    .status-dot { width:7px; height:7px; border-radius:50%; background:currentColor; animation:pulse 1.6s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ★ Login credentials reminder card */
+    .credentials-card {
+      background:#111;
+      border:1.5px solid #F59E0B;
+      border-radius:14px;
+      padding:18px 20px;
+      margin-bottom:20px;
+    }
+    .cred-header {
+      display:flex; align-items:center; gap:8px;
+      font-size:.72rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:.06em; color:#F59E0B; margin-bottom:12px;
+    }
+    .cred-note {
+      font-size:.82rem; color:#999; line-height:1.6; margin-bottom:14px;
+    }
+    .cred-note strong { color:#ccc; }
+    .cred-fields { display:flex; flex-direction:column; gap:8px; }
+    .cred-row {
+      display:flex; align-items:center; gap:10px;
+      background:#0a0a0a; border:1px solid #222; border-radius:9px;
+      padding:10px 14px;
+    }
+    .cred-label { font-size:.7rem; color:#555; font-weight:700; text-transform:uppercase; letter-spacing:.04em; width:72px; flex-shrink:0; }
+    .cred-value { font-family:'Space Mono',monospace; font-size:.85rem; color:#ccc; flex:1; word-break:break-all; }
+    .cred-copy  {
+      background:#1a1a1a; border:1px solid #333; color:#666;
+      font-family:'Sora',sans-serif; font-size:.68rem; font-weight:600;
+      padding:4px 9px; border-radius:6px; cursor:pointer; white-space:nowrap;
+      transition:color .15s;
+    }
+    .cred-copy:hover { color:#ccc; }
+    .cred-divider { width:1px; height:16px; background:#222; flex-shrink:0; }
+
+    /* Info card */
+    .info-card { background:#111; border:1px solid #222; border-radius:14px; padding:20px; margin-bottom:20px; }
+    .info-row  { display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid #1a1a1a; }
+    .info-row:last-child { border-bottom:none; }
+    .info-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:.95rem; background:#1a1a1a; }
+    .info-label{ font-size:.68rem; color:#555; margin-bottom:2px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+    .info-val  { font-size:.88rem; color:#ccc; font-weight:500; }
+    .info-val.mono{ font-family:'Space Mono',monospace; font-size:.78rem; }
+
+    /* Countdown */
+    .countdown-section { margin-bottom:20px; }
+    .cd-label{ font-size:.68rem; color:#555; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; text-align:center; }
+    .cd-boxes{ display:flex; gap:8px; justify-content:center; }
+    .cd-box  { background:#111; border:1px solid #222; border-radius:10px; padding:12px 14px; min-width:70px; text-align:center; }
+    .cd-num  { font-family:'Space Mono',monospace; font-size:1.4rem; font-weight:700; color:#F59E0B; line-height:1; margin-bottom:4px; }
+    .cd-lbl  { font-size:.62rem; color:#555; text-transform:uppercase; letter-spacing:.04em; }
+
+    .auto-note {
+      display:flex; align-items:center; gap:8px; justify-content:center;
+      font-size:.76rem; color:#555; margin-bottom:24px; line-height:1.6; text-align:center;
+    }
+    .auto-note strong { color:#888; }
+
+    /* Buttons */
+    .btn-row   { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+    .btn-check {
+      display:inline-flex; align-items:center; gap:7px;
+      padding:10px 20px; background:#F59E0B; color:#000;
+      font-family:'Sora',sans-serif; font-size:.85rem; font-weight:700;
+      border:none; border-radius:10px; cursor:pointer; transition:background .2s;
+    }
+    .btn-check:hover { background:#D97706; }
+    .btn-logout{
+      display:inline-flex; align-items:center; gap:7px;
+      padding:10px 20px; background:#1a1a1a; color:#888;
+      font-family:'Sora',sans-serif; font-size:.85rem; font-weight:600;
+      border:1px solid #222; border-radius:10px; cursor:pointer; transition:all .2s;
+    }
+    .btn-logout:hover { color:#fff; border-color:#444; }
+    .check-note{ font-size:.7rem; color:#444; margin-top:10px; text-align:center; }
+
+    /* Approved state */
+    .approved-state  { display:none; text-align:center; }
+    .approved-icon   { font-size:3.5rem; display:block; margin-bottom:14px; animation:bounceIn .5s ease; }
+    .btn-dashboard {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:13px 28px; background:#22C55E; color:#000;
+      font-family:'Sora',sans-serif; font-size:.92rem; font-weight:700;
+      border:none; border-radius:10px; cursor:pointer; margin-top:20px;
+    }
+    @keyframes bounceIn { 0%{transform:scale(.5);opacity:0} 80%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+
+    @media(max-width:480px){ .cd-box{min-width:55px; padding:10px 8px;} }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <span class="logo-drop">&#9632;</span>
+    <span>BloodLink<span class="logo-tn">TN</span></span>
+  </div>
+
+  <!-- PENDING STATE -->
+  <div id="pendingState">
+    <div class="clock-ring"></div>
+
+    <div style="display:flex;justify-content:center;margin-bottom:16px">
+      <div class="status-badge status-pending">
+        <span class="status-dot"></span>
+        Awaiting admin approval
+      </div>
+    </div>
+
+    <h1>Your application is under review</h1>
+    <p class="sub">Your organisation has been registered. Admin is verifying your license. You will be notified when approved — check back using the credentials below.</p>
+
+    <!-- ★ LOGIN CREDENTIALS REMINDER -->
+    <div class="credentials-card">
+      <div class="cred-header">
+        🔐 Save your login credentials
+      </div>
+      <p class="cred-note">
+        Once approved, <strong>log in using these details</strong> on the Login page. You do not need to register again.
+      </p>
+      <div class="cred-fields">
+        <div class="cred-row">
+          <span class="cred-label">Email</span>
+          <div class="cred-divider"></div>
+          <span class="cred-value" id="credEmail">—</span>
+          <button class="cred-copy" onclick="copyText('credEmail',this)">Copy</button>
+        </div>
+        <div class="cred-row">
+          <span class="cred-label">Password</span>
+          <div class="cred-divider"></div>
+          <span class="cred-value" id="credPassword">Your registered password</span>
+        </div>
+        <div class="cred-row">
+          <span class="cred-label">Role</span>
+          <div class="cred-divider"></div>
+          <span class="cred-value" id="credRole">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Organisation details -->
+    <div class="info-card" id="infoCard">
+      <div class="info-row">
+        <div class="info-icon">🏥</div>
+        <div>
+          <div class="info-label">Organisation</div>
+          <div class="info-val" id="infoOrg">—</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">🪪</div>
+        <div>
+          <div class="info-label">License number</div>
+          <div class="info-val mono" id="infoLicense">—</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">📍</div>
+        <div>
+          <div class="info-label">District</div>
+          <div class="info-val" id="infoDistrict">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Countdown -->
+    <div class="countdown-section">
+      <div class="cd-label">Auto-approved in</div>
+      <div class="cd-boxes">
+        <div class="cd-box"><div class="cd-num" id="cdHours">--</div><div class="cd-lbl">Hours</div></div>
+        <div class="cd-box"><div class="cd-num" id="cdMins">--</div><div class="cd-lbl">Mins</div></div>
+        <div class="cd-box"><div class="cd-num" id="cdSecs">--</div><div class="cd-lbl">Secs</div></div>
+      </div>
+    </div>
+
+    <p class="auto-note">
+      ⏱ If admin doesn't review within <strong>12 hours</strong>, your account is automatically approved
+    </p>
+
+    <div class="btn-row">
+      <button class="btn-check" onclick="checkStatus()">↻ Check status</button>
+      <button class="btn-logout" onclick="safeLogout()">← Back to login</button>
+    </div>
+    <p class="check-note">Status auto-checks every 60 seconds</p>
+  </div>
+
+  <!-- APPROVED STATE -->
+  <div id="approvedState" class="approved-state">
+    <span class="approved-icon">✅</span>
+    <div style="display:flex;justify-content:center;margin-bottom:16px">
+      <div class="status-badge status-approved">
+        <span class="status-dot"></span>
+        Approved &amp; active
+      </div>
+    </div>
+    <h1>You're approved!</h1>
+    <p class="sub" id="approvedMsg">Your account has been approved. You can now access your dashboard.</p>
+    <div style="text-align:center">
+      <button class="btn-dashboard" onclick="goToDashboard()">Go to dashboard →</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script>
+  const user         = api.auth.getUser ? api.auth.getUser() : null;
+  let   autoApproveAt = null;
+  let   countdownInt  = null;
+  let   autoCheckInt  = null;
+
+  /* Fill credentials box */
+  if (user) {
+    const email = user.email || '—';
+    const role  = user.role === 'bloodbank' ? 'Blood Bank' : user.role === 'hospital' ? 'Hospital' : user.role;
+
+    document.getElementById('credEmail').textContent    = email;
+    document.getElementById('credRole').textContent     = role;
+    document.getElementById('infoOrg').textContent      = user.orgName || (user.firstName + ' ' + (user.lastName||''));
+    document.getElementById('infoLicense').textContent  = user.licenseNumber || '—';
+    document.getElementById('infoDistrict').textContent = user.district || '—';
+
+    autoApproveAt = user.autoApproveAt ? new Date(user.autoApproveAt) : null;
+    if (autoApproveAt) startCountdown(autoApproveAt);
+  }
+
+  /* Copy button */
+  function copyText(id, btn) {
+    const val = document.getElementById(id).textContent;
+    navigator.clipboard.writeText(val).then(() => {
+      const old = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = old; }, 1500);
+    });
+  }
+
+  /* Countdown timer */
+  function startCountdown(target) {
+    if (countdownInt) clearInterval(countdownInt);
+    countdownInt = setInterval(() => {
+      const ms = target - Date.now();
+      if (ms <= 0) {
+        setCD('00','00','00');
+        clearInterval(countdownInt);
+        checkStatus();
+        return;
+      }
+      const h = Math.floor(ms / 3600000);
+      const m = Math.floor((ms % 3600000) / 60000);
+      const s = Math.floor((ms % 60000) / 1000);
+      setCD(pad(h), pad(m), pad(s));
+    }, 1000);
+  }
+  function setCD(h,m,s) {
+    document.getElementById('cdHours').textContent = h;
+    document.getElementById('cdMins').textContent  = m;
+    document.getElementById('cdSecs').textContent  = s;
+  }
+  function pad(n) { return String(n).padStart(2,'0'); }
+
+  /* Check approval status from server */
+  async function checkStatus() {
+    try {
+      const res  = await fetch(window.BASE_URL + '/auth/status', {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('bl_token') }
+      });
+      const json = await res.json();
+      if (!json.success) return;
+
+      if (json.isVerified) {
+        // Update stored user
+        const u = api.auth.getUser ? api.auth.getUser() : null;
+        if (u) { u.isVerified = true; u.approvedBy = json.approvedBy; localStorage.setItem('bl_user', JSON.stringify(u)); }
+        showApproved(json.approvedBy);
+      } else if (json.timeLeft && json.timeLeft.total_ms > 0) {
+        const newTarget = new Date(Date.now() + json.timeLeft.total_ms);
+        startCountdown(newTarget);
+      }
+    } catch(err) {
+      console.warn('Status check failed:', err.message);
+    }
+  }
+
+  function showApproved(approvedBy) {
+    clearInterval(countdownInt);
+    clearInterval(autoCheckInt);
+    document.getElementById('pendingState').style.display  = 'none';
+    document.getElementById('approvedState').style.display = 'block';
+    document.getElementById('approvedMsg').textContent = approvedBy === 'auto'
+      ? 'Your account was automatically approved after 12 hours. Welcome to BloodLink TN!'
+      : 'An admin has reviewed and approved your account. Welcome to BloodLink TN!';
+  }
+
+  function goToDashboard() {
+    const u = api.auth.getUser ? api.auth.getUser() : null;
+    if (!u) { window.location.href = '../pages/register.html?tab=login'; return; }
+    const map = {
+      bloodbank: '../pages/dashboard-bank.html',
+      hospital:  '../pages/dashboard-patient.html',
+      patient:   '../pages/dashboard-patient.html',
+      admin:     '../pages/dashboard-admin.html',
+    };
+    window.location.href = map[u.role] || '../index.html';
+  }
+
+  function safeLogout() {
+    // Go to login page but KEEP the token so user can log back in
+    window.location.href = '../pages/register.html?tab=login';
+  }
+
+  // Auto-check every 60 seconds
+  autoCheckInt = setInterval(checkStatus, 60000);
+  // Initial check on load (after 1s delay for page to settle)
+  setTimeout(checkStatus, 1000);
+</script>
+</body>
+</html>
