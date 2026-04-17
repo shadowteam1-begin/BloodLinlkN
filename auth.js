@@ -1,259 +1,242 @@
-/* ═══════════════════════════════════════════
-   BloodLink TN — auth.js v5
-   Fixes:
-   • Always clears old localStorage before login/register
-   • Fetches full /me profile after login/register
-   • Hospital → dashboard-patient.html (correct)
-   • Blood bank → dashboard-bank.html
-   • Pending → pending-approval.html
-═══════════════════════════════════════════ */
+// ═══════════════════════════════════════════
+// routes/auth.js — Register, Login, Profile
+//
+// Feature: Blood banks & hospitals must submit
+// a government license number on register.
+// They enter a "pending approval" state.
+// Admin can approve manually OR the system
+// auto-approves after 12 hours automatically.
+// ═══════════════════════════════════════════
 
-/* ─── 1. TAB SWITCHING ─────────────────── */
-function showTab(tab) {
-  const fL = document.getElementById('formLogin');
-  const fR = document.getElementById('formRegister');
-  const tL = document.getElementById('tabLogin');
-  const tR = document.getElementById('tabRegister');
-  if (tab === 'login') {
-    fL.style.display='block'; fR.style.display='none';
-    tL.classList.add('active'); tR.classList.remove('active');
-  } else {
-    fL.style.display='none'; fR.style.display='block';
-    tL.classList.remove('active'); tR.classList.add('active');
-  }
-}
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('tab') === 'login') showTab('login');
+const express = require('express');
+const router  = express.Router();
+const jwt     = require('jsonwebtoken');
+const User    = require('../models/User');
+const Stock   = require('../models/Stock');
+const { protect } = require('../middleware/auth');
 
-const roleParam = urlParams.get('role');
-if (roleParam) {
-  showTab('register');
-  const ri = document.querySelector('input[name="role"][value="' + roleParam + '"]');
-  if (ri) { ri.checked = true; handleRoleChange(roleParam); }
-}
-
-/* ─── 2. ROLE SELECTION ────────────────── */
-function handleRoleChange(role) {
-  const orgGroup     = document.getElementById('orgNameGroup');
-  const licenseGroup = document.getElementById('licenseGroup');
-  const needsOrg     = role === 'bloodbank' || role === 'hospital';
-  orgGroup.style.display     = needsOrg ? 'block' : 'none';
-  licenseGroup.style.display = needsOrg ? 'block' : 'none';
-  if (needsOrg) {
-    document.getElementById('regOrgName').placeholder =
-      role === 'bloodbank' ? 'Salem Government Blood Bank' : 'Apollo Hospitals Salem';
-    document.getElementById('regLicense').placeholder =
-      role === 'bloodbank' ? 'e.g. TN/BB/2024/045' : 'e.g. TN/HOS/2024/112';
-  }
-}
-document.querySelectorAll('input[name="role"]').forEach(r => {
-  r.addEventListener('change', () => handleRoleChange(r.value));
-});
-
-/* ─── 3. PASSWORD SHOW/HIDE ─────────────── */
-function togglePassword(id, btn) {
-  const inp = document.getElementById(id);
-  inp.type = inp.type === 'password' ? 'text' : 'password';
-  btn.textContent = inp.type === 'password' ? 'Show' : 'Hide';
-}
-
-/* ─── 4. PASSWORD STRENGTH ──────────────── */
-const regPw = document.getElementById('regPassword');
-if (regPw) {
-  regPw.addEventListener('input', () => {
-    const v = regPw.value;
-    const meter = document.getElementById('pwStrength');
-    const fill  = document.getElementById('strengthFill');
-    const label = document.getElementById('strengthLabel');
-    if (!v) { meter.style.display = 'none'; return; }
-    meter.style.display = 'flex';
-    let score = 0;
-    if (v.length >= 8) score++;
-    if (/[A-Z]/.test(v)) score++;
-    if (/[0-9]/.test(v)) score++;
-    if (/[^A-Za-z0-9]/.test(v)) score++;
-    const lvls = [
-      { w:'25%', c:'#EF4444', t:'Weak'   },
-      { w:'50%', c:'#F97316', t:'Fair'   },
-      { w:'75%', c:'#EAB308', t:'Good'   },
-      { w:'100%',c:'#22C55E', t:'Strong' },
-    ];
-    const l = lvls[score - 1] || lvls[0];
-    fill.style.width = l.w; fill.style.background = l.c;
-    label.textContent = l.t; label.style.color = l.c;
+// ── JWT helper ────────────────────────────
+const sendTokenResponse = (user, statusCode, res) => {
+  const token = jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+  );
+  res.status(statusCode).json({
+    success: true,
+    token,
+    user: {
+      id:                  user._id,
+      firstName:           user.firstName,
+      lastName:            user.lastName,
+      email:               user.email,
+      role:                user.role,
+      district:            user.district,
+      orgName:             user.orgName,
+      licenseNumber:       user.licenseNumber,
+      isVerified:          user.isVerified,
+      approvalRequestedAt: user.approvalRequestedAt,
+      autoApproveAt:       user.autoApproveAt,
+      approvedBy:          user.approvedBy,
+      phone:               user.phone,
+    }
   });
-}
+};
 
-/* ─── 5. VALIDATION HELPERS ─────────────── */
-function showError(fId, eId, msg) {
-  const f = document.getElementById(fId); const e = document.getElementById(eId);
-  if (f) f.classList.add('error'); if (e) e.textContent = msg;
-  return false;
-}
-function clearError(fId, eId) {
-  const f = document.getElementById(fId); const e = document.getElementById(eId);
-  if (f) f.classList.remove('error'); if (e) e.textContent = '';
-}
-function clearAll(ids) { ids.forEach(([f,e]) => clearError(f,e)); }
-function isEmail(v)  { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
-function isPhone(v)  { return /^\d{10}$/.test(v.replace(/\s/g,'')); }
-
-/* ─── CLEAR OLD SESSION ─────────────────── */
-// Always clear any previously logged-in user before new login/register
-function clearPreviousSession() {
-  localStorage.removeItem('bl_token');
-  localStorage.removeItem('bl_user');
-}
-
-/* ─── 6a. LOGIN ──────────────────────────── */
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  clearAll([['loginEmail','loginEmailErr'],['loginPassword','loginPasswordErr']]);
-
-  const email = document.getElementById('loginEmail').value.trim();
-  const pw    = document.getElementById('loginPassword').value;
-  let ok = true;
-  if (!email)          ok = showError('loginEmail','loginEmailErr','Email is required');
-  else if (!isEmail(email)) ok = showError('loginEmail','loginEmailErr','Enter a valid email');
-  if (!pw)             ok = showError('loginPassword','loginPasswordErr','Password is required');
-  else if (pw.length<6) ok = showError('loginPassword','loginPasswordErr','Min 6 characters');
-  if (!ok) return;
-
-  setLoading('loginBtn', true);
-
+// ══════════════════════════════════════════
+// POST /api/auth/register
+// ══════════════════════════════════════════
+router.post('/register', async (req, res) => {
   try {
-    // ★ Clear old session first — prevents wrong profile showing
-    clearPreviousSession();
+    const {
+      firstName, lastName, email, password,
+      phone, role, district, orgName, licenseNumber, address
+    } = req.body;
 
-    const data = await api.auth.login(email, pw);
-    let user = data.user;
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ success: false, msg: 'First name, last name, email and password are required' });
+    }
 
-    // ★ Always fetch full profile from DB to get all fields
-    try {
-      const meData = await api.auth.me();
-      if (meData.user) {
-        user = meData.user;
-        localStorage.setItem('bl_user', JSON.stringify(user));
+    // Require license number for blood banks and hospitals
+    const needsLicense = role === 'bloodbank' || role === 'hospital';
+    if (needsLicense && !licenseNumber) {
+      return res.status(400).json({
+        success: false,
+        msg: 'Government license number is required for blood banks and hospitals'
+      });
+    }
+    if (needsLicense && licenseNumber.trim().length < 4) {
+      return res.status(400).json({
+        success: false,
+        msg: 'Please enter a valid license number (minimum 4 characters)'
+      });
+    }
+
+    // Check duplicate email
+    const existing = await User.findOne({ email: email.toLowerCase() });
+    if (existing) {
+      return res.status(400).json({ success: false, msg: 'An account with this email already exists' });
+    }
+
+    // Check duplicate license (same role)
+    if (needsLicense && licenseNumber) {
+      const dupLicense = await User.findOne({ licenseNumber: licenseNumber.trim(), role });
+      if (dupLicense) {
+        return res.status(400).json({ success: false, msg: 'This license number is already registered' });
       }
-    } catch(meErr) {
-      // Use login response data if /me fails
-      console.warn('Could not fetch /me:', meErr.message);
     }
 
-    // Redirect based on role + verification
-    if ((user.role === 'bloodbank' || user.role === 'hospital') && !user.isVerified) {
-      window.location.href = '../pages/pending-approval.html';
-    } else {
-      window.location.href = getDashboardUrl(user.role);
-    }
+    // Patients are auto-verified; banks/hospitals start pending
+    const isPatient   = role === 'patient';
+    const now         = new Date();
+    // Auto-approve 12 hours after registration if admin doesn't act
+    const autoApprove = needsLicense ? new Date(now.getTime() + 12 * 60 * 60 * 1000) : null;
 
-  } catch (err) {
-    showFormAlert('loginAlert', 'error', err.message);
-    setLoading('loginBtn', false);
-  }
-});
-
-/* ─── 6b. REGISTER ───────────────────────── */
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  clearAll([
-    ['regFirstName','regFirstNameErr'],['regLastName','regLastNameErr'],
-    ['regOrgName','regOrgNameErr'],['regLicense','regLicenseErr'],
-    ['regEmail','regEmailErr'],['regPhone','regPhoneErr'],
-    ['regDistrict','regDistrictErr'],['regPassword','regPasswordErr'],
-  ]);
-
-  const role      = document.querySelector('input[name="role"]:checked').value;
-  const firstName = document.getElementById('regFirstName').value.trim();
-  const lastName  = document.getElementById('regLastName').value.trim();
-  const orgName   = document.getElementById('regOrgName').value.trim();
-  const license   = document.getElementById('regLicense').value.trim();
-  const email     = document.getElementById('regEmail').value.trim();
-  const phone     = document.getElementById('regPhone').value.trim();
-  const district  = document.getElementById('regDistrict').value;
-  const password  = document.getElementById('regPassword').value;
-  const terms     = document.getElementById('regTerms').checked;
-  const needsOrg  = role === 'bloodbank' || role === 'hospital';
-  let ok = true;
-
-  if (!firstName) ok = showError('regFirstName','regFirstNameErr','First name is required');
-  if (!lastName)  ok = showError('regLastName','regLastNameErr','Last name is required');
-  if (needsOrg && !orgName)  ok = showError('regOrgName','regOrgNameErr','Organisation name is required');
-  if (needsOrg && !license)  ok = showError('regLicense','regLicenseErr','Government license number is required');
-  else if (needsOrg && license.length < 4) ok = showError('regLicense','regLicenseErr','Enter a valid license number (min 4 chars)');
-  if (!email)          ok = showError('regEmail','regEmailErr','Email is required');
-  else if (!isEmail(email)) ok = showError('regEmail','regEmailErr','Enter a valid email');
-  if (!phone)          ok = showError('regPhone','regPhoneErr','Phone is required');
-  else if (!isPhone(phone)) ok = showError('regPhone','regPhoneErr','Enter a valid 10-digit number');
-  if (!district)  ok = showError('regDistrict','regDistrictErr','Please select district');
-  if (!password)  ok = showError('regPassword','regPasswordErr','Password is required');
-  else if (password.length < 8) ok = showError('regPassword','regPasswordErr','Min 8 characters');
-  if (!terms) { document.getElementById('regTermsErr').textContent = 'You must accept the terms'; ok = false; }
-  if (!ok) return;
-
-  setLoading('registerBtn', true);
-
-  try {
-    // ★ Clear old session first
-    clearPreviousSession();
-
-    const data = await api.auth.register({
-      firstName, lastName, orgName, licenseNumber: license,
-      email, phone, district, password, role,
+    const user = await User.create({
+      firstName, lastName, email, password,
+      phone, district, orgName,
+      licenseNumber: licenseNumber ? licenseNumber.trim().toUpperCase() : undefined,
+      address,
+      role:                role     || 'patient',
+      isVerified:          isPatient,            // patients verified immediately
+      approvalRequestedAt: needsLicense ? now  : null,
+      autoApproveAt:       needsLicense ? autoApprove : null,
+      approvedBy:          isPatient ? 'auto' : null,
     });
-    let user = data.user;
 
-    // ★ Fetch full profile from DB
-    try {
-      const meData = await api.auth.me();
-      if (meData.user) {
-        user = meData.user;
-        localStorage.setItem('bl_user', JSON.stringify(user));
-      }
-    } catch(meErr) {
-      console.warn('Could not fetch /me:', meErr.message);
+    // Create empty stock for blood banks
+    if (role === 'bloodbank') {
+      await Stock.create({ bank: user._id });
     }
 
-    // Redirect
-    if ((user.role === 'bloodbank' || user.role === 'hospital') && !user.isVerified) {
-      window.location.href = '../pages/pending-approval.html';
-    } else {
-      window.location.href = getDashboardUrl(user.role);
-    }
+    sendTokenResponse(user, 201, res);
 
   } catch (err) {
-    showFormAlert('registerAlert', 'error', err.message);
-    setLoading('registerBtn', false);
+    console.error('Register error:', err.message);
+    res.status(500).json({ success: false, msg: 'Server error. Please try again.' });
   }
 });
 
-/* ─── HELPERS ──────────────────────────── */
-function setLoading(id, on) {
-  const b = document.getElementById(id);
-  if (!b) return;
-  b.disabled = on;
-  const text   = b.querySelector('.btn-text');
-  const loader = b.querySelector('.btn-loader');
-  if (text)   text.style.display   = on ? 'none'   : 'inline';
-  if (loader) loader.style.display = on ? 'inline' : 'none';
-}
+// ══════════════════════════════════════════
+// POST /api/auth/login
+// ══════════════════════════════════════════
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ success: false, msg: 'Please provide email and password' });
+    }
 
-function showFormAlert(id, type, msg) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.className = 'form-alert ' + type;
-  el.textContent = msg;
-  el.style.display = 'block';
-  el.scrollIntoView({ behavior:'smooth', block:'nearest' });
-}
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    if (!user) return res.status(401).json({ success: false, msg: 'Invalid email or password' });
 
-function getDashboardUrl(role) {
-  // ★ Hospital uses PATIENT dashboard (they search + request blood, not manage stock)
-  const map = {
-    patient:   '../pages/dashboard-patient.html',
-    bloodbank: '../pages/dashboard-bank.html',
-    hospital:  '../pages/dashboard-patient.html', // same UI as patient
-    admin:     '../pages/dashboard-admin.html',
-  };
-  return map[role] || '../index.html';
-}
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) return res.status(401).json({ success: false, msg: 'Invalid email or password' });
+
+    // ── Check auto-approve ─────────────────
+    // If the 12-hour window has passed and not yet approved, auto-approve now
+    if (!user.isVerified && user.autoApproveAt && new Date() >= user.autoApproveAt) {
+      user.isVerified  = true;
+      user.approvedBy  = 'auto';
+      await user.save();
+      console.log('⏱  Auto-approved:', user.orgName || user.email);
+    }
+
+    sendTokenResponse(user, 200, res);
+
+  } catch (err) {
+    console.error('Login error:', err.message);
+    res.status(500).json({ success: false, msg: 'Server error. Please try again.' });
+  }
+});
+
+// ══════════════════════════════════════════
+// GET /api/auth/me
+// ══════════════════════════════════════════
+router.get('/me', protect, async (req, res) => {
+  res.json({ success: true, user: req.user });
+});
+
+// ══════════════════════════════════════════
+// PUT /api/auth/me
+// ══════════════════════════════════════════
+router.put('/me', protect, async (req, res) => {
+  try {
+    const allowed = ['firstName','lastName','phone','district','address','workingHours','bloodGroup'];
+    const updates = {};
+    allowed.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
+    const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true, runValidators: true });
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ success: false, msg: 'Could not update profile' });
+  }
+});
+
+// ══════════════════════════════════════════
+// GET /api/auth/status
+// Check approval status (called by pending page)
+// ══════════════════════════════════════════
+router.get('/status', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    // Check auto-approve again on status check
+    if (!user.isVerified && user.autoApproveAt && new Date() >= user.autoApproveAt) {
+      user.isVerified = true;
+      user.approvedBy = 'auto';
+      await user.save();
+    }
+
+    const msLeft = user.autoApproveAt ? Math.max(0, user.autoApproveAt - Date.now()) : 0;
+    const hrsLeft = Math.floor(msLeft / 3600000);
+    const minLeft = Math.floor((msLeft % 3600000) / 60000);
+
+    res.json({
+      success:    true,
+      isVerified: user.isVerified,
+      approvedBy: user.approvedBy,
+      timeLeft:   { hours: hrsLeft, minutes: minLeft, total_ms: msLeft },
+      autoApproveAt: user.autoApproveAt,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, msg: err.message });
+  }
+});
+
+// POST /api/auth/forgot-password
+// Simulate sending reset email (logs to console, extend with nodemailer)
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, msg: 'Email is required' });
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    // Always return success (security: don't reveal if email exists)
+    if (!user) {
+      return res.json({ success: true, msg: 'If registered, reset link sent.' });
+    }
+
+    // Generate a simple reset token (in production: use crypto + store with expiry)
+    const resetToken = require('crypto').randomBytes(32).toString('hex');
+    const resetLink  = (process.env.FRONTEND_URL || 'http://localhost:5500') +
+      '/pages/reset-password.html?token=' + resetToken + '&email=' + encodeURIComponent(email);
+
+    // Log to console (extend with actual email sending via nodemailer/MSG91)
+    console.log('');
+    console.log('════════════════════════════════════════');
+    console.log('🔑  Password Reset Request');
+    console.log('  Email:', email);
+    console.log('  Name: ', user.firstName, user.lastName);
+    console.log('  Link: ', resetLink);
+    console.log('  (Send this link to the user via email)');
+    console.log('════════════════════════════════════════');
+    console.log('');
+
+    res.json({ success: true, msg: 'If registered, reset link sent.', resetLink });
+  } catch(err) {
+    res.status(500).json({ success: false, msg: err.message });
+  }
+});
+
+module.exports = router;
